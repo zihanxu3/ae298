@@ -36,9 +36,16 @@ const int WRITE_BYTE = 0x00;
 // Pins used for the connection with the sensor
 const int CHIP_SELECT_PIN = 7;
 
+// setup a count, iterating the loop for 65000 times
+int count = 0;
+
 void setup() {
-  //Probably set the clock here? 
   Serial.begin(9600);
+ 
+  //possible configuration: set up the clock 
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0));
+  
+  //set up the pins 
   SPI.begin();
 
   // Initalize the  data ready and chip select pins:
@@ -91,6 +98,11 @@ void loop() {
 
   // Next data in 100 milliseconds
   delay(100);
+  ++count;
+
+  if (count == 65000) {
+    return;
+  }
 }
 
 /* 
