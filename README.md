@@ -4,7 +4,7 @@ Repository for project in Bretl Research Group
 ## Wiring ADXL355 to Arduino MKR1000
 
 | ADXL355 Pin Numer  | ADXL Pin description       | Arduino Pin   |
-| -----------------: |----------------------------|---------------|
+| -----------------  |----------------------------|---------------|
 | 1                  | Chip Select                | 07            |
 | 2                  | Master Out Slave In (MOSI) | 08            |
 | 3                  | Master In Slave Out (MISO) | 10            |
