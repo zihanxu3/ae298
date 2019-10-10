@@ -27,7 +27,7 @@ const int POWER_CTL = 0x2D;
 const int RANGE_2G = 0x01;
 const int RANGE_4G = 0x02;
 const int RANGE_8G = 0x03;
-const int MEASURE_MODE = 0x06; // Only accelerometer
+const int MEASURE_MODE = 0x00; // Only accelerometer
 
 // Operations
 const int READ_BYTE = 0x01;
@@ -40,16 +40,15 @@ const int CHIP_SELECT_PIN = 7;
 int count = 0;
 
 void setup() {
-  Serial.begin(9600);
- 
-  //possible configuration: set up the clock 
-  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0));
-  
-  //set up the pins 
   SPI.begin();
-
+  //SPI.beginTransaction(SPISettings(500, MSBFIRST, SPI_MODE0));
+  Serial.begin(9600);
+//  //possible configuration: set up the clock 
+  
+  
   // Initalize the  data ready and chip select pins:
   pinMode(CHIP_SELECT_PIN, OUTPUT);
+  digitalWrite(CHIP_SELECT_PIN, HIGH);
 
   //Configure ADXL355:
   writeRegister(RANGE, RANGE_2G); // 2G
@@ -60,6 +59,7 @@ void setup() {
 }
 
 void loop() {
+
   int axisAddresses[] = {XDATA1, XDATA2, XDATA3, YDATA1, YDATA2, YDATA3, ZDATA1, ZDATA2, ZDATA3};
   int axisMeasures[] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
   int dataSize = 9;
@@ -68,41 +68,62 @@ void loop() {
   readMultipleData(axisAddresses, dataSize, axisMeasures);
 
   // Split data
-  int xdata = (axisMeasures[0] >> 4) + (axisMeasures[1] << 4) + (axisMeasures[2] << 12);
-  int ydata = (axisMeasures[3] >> 4) + (axisMeasures[4] << 4) + (axisMeasures[5] << 12);
-  int zdata = (axisMeasures[6] >> 4) + (axisMeasures[7] << 4) + (axisMeasures[8] << 12);
-  
-  // Apply two's complement
-  if (xdata >= 0x80000) {
-    xdata = ~xdata + 1;
-  }
-  if (ydata >= 0x80000) {
-    ydata = ~ydata + 1;
-  }
-  if (zdata >= 0x80000) {
-    zdata = ~zdata + 1;
-  }
+//  unsigned long tempV = 0;
+//  unsigned long value = 0;
+//  value = axisMeasures[2]; 
+//  value <<= 12;
+//  tempV = axisMeasures[1];
+//  tempV <<= 4;
+//  value |= tempV;
+//  tempV = axisMeasures[0];
+//  tempV >>= 4;
+//  value |= tempV;
+//
+//  if (axisMeasures[2] & 0x80) {
+//    value = value | 0xFFF00000;
+//  }
+  int xdata = get_data_helper(axisMeasures[0], axisMeasures[1], axisMeasures[2]);
+  int ydata = get_data_helper(axisMeasures[3], axisMeasures[4], axisMeasures[5]);
+  int zdata = get_data_helper(axisMeasures[6], axisMeasures[7], axisMeasures[8]);
+//  int xdata = (axisMeasures[0] >> 4) + (axisMeasures[1] << 4) + (axisMeasures[2] << 12);
+//  int ydata = (axisMeasures[3] >> 4) + (axisMeasures[4] << 4) + (axisMeasures[5] << 12);
+//  int zdata = (axisMeasures[6] >> 4) + (axisMeasures[7] << 4) + (axisMeasures[8] << 12);
 
+  
+ 
+  // Apply two's complement
+//  if (xdata >= 0x80000) {
+//    xdata = ~xdata + 1;
+//  }
+
+//  if (ydata >= 0x80000) {
+//    ydata = ~ydata + 1;
+//  }
+//  if (zdata >= 0x80000) {
+//    zdata = ~zdata + 1;
+//  }
+
+  
   // Print axis
   Serial.print("X=");
-  Serial.print(xdata);
+  Serial.print(xdata * 3.9E-6);
   Serial.print("\t");
   
   Serial.print("Y=");
-  Serial.print(ydata);
+  Serial.print(ydata * 3.9E-6);
   Serial.print("\t");
 
   Serial.print("Z=");
-  Serial.print(zdata);
+  Serial.print(zdata * 3.9E-6);
   Serial.print("\n");
 
   // Next data in 100 milliseconds
   delay(100);
-  ++count;
-
-  if (count == 65000) {
-    return;
-  }
+//  ++count;
+//
+//  if (count % 10000 == 0) {
+//    exit(0);
+//  }
 }
 
 /* 
@@ -130,6 +151,23 @@ unsigned int readRegistry(byte thisRegister) {
   return result;
 }
 
+unsigned long get_data_helper(int data_1, int data_2, int data_3) {
+  unsigned long tempV = 0;
+  unsigned long value = 0;
+  value = data_3; 
+  value <<= 12;
+  tempV = data_2;
+  tempV <<= 4;
+  value |= tempV;
+  tempV = data_1;
+  tempV >>= 4;
+  value |= tempV;
+
+  if (data_3 & 0x80) {
+    value = value | 0xFFF00000;
+  }
+  return value;
+}
 /* 
  * Read multiple registries
  */
@@ -137,7 +175,7 @@ void readMultipleData(int *addresses, int dataSize, int *readedData) {
   digitalWrite(CHIP_SELECT_PIN, LOW);
   for(int i = 0; i < dataSize; i = i + 1) {
     byte dataToSend = (addresses[i] << 1) | READ_BYTE;
-    SPI.transfer(dataToSend); //send data address and 
+    SPI.transfer(dataToSend); //send data address 
     readedData[i] = SPI.transfer(0x00);
   }
   digitalWrite(CHIP_SELECT_PIN, HIGH);
