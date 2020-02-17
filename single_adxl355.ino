@@ -1,9 +1,6 @@
-
 /*-----------------------Bretl Research Group------------------------*/
 /*
  ADXL355-PMDZ Accelerometer Sensor Display
-
-
  Modified 25 Sept 2019
  by Zihan Xu 
  */
@@ -82,27 +79,37 @@ void loop() {
   int zdata = (readRegistry(ZDATA1) >> 4) + (readRegistry(ZDATA2) << 4) + (readRegistry(ZDATA3) << 12);
   
   // Apply two's complement
-  if (xdata >= 0x80000) {
-    xdata = ~xdata + 1;
-  }
-  if (ydata >= 0x80000) {
-    ydata = ~ydata + 1;
-  }
-  if (zdata >= 0x80000) {
-    zdata = ~zdata + 1;
-  }
+//  if (xdata >= 0x80000) {
+//    xdata = ~xdata + 1;
+//  }
+//  if (ydata >= 0x80000) {
+//    ydata = ~ydata + 1;
+//  }
+//  if (zdata >= 0x80000) {
+//    zdata = ~zdata + 1;
+//  }
 
+  if ((xdata & (1 << 19)) != 0) {
+    xdata = xdata - (1 << 20);
+  }
+  if ((ydata & (1 << 19)) != 0) {
+    ydata = ydata - (1 << 20);
+  }
+  if ((zdata & (1 << 19)) != 0) {
+    zdata = zdata - (1 << 20);
+  }
+  
   // Print axis
   Serial.print("X=");
-  Serial.print(xdata);
+  Serial.print(xdata*3.9E-6 - offSets[0]);
   Serial.print("\t");
   
   Serial.print("Y=");
-  Serial.print(ydata);
+  Serial.print(ydata*3.9E-6 - offSets[1]);
   Serial.print("\t");
 
   Serial.print("Z=");
-  Serial.print(zdata);
+  Serial.print(zdata*3.9E-6 - offSets[2]);
   Serial.print("\n");
 
   // Next data in 100 milliseconds
