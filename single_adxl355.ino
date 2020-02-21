@@ -1,4 +1,3 @@
-/*-----------------------Bretl Research Group------------------------*/
 /*
  ADXL355-PMDZ Accelerometer Sensor Display
  Modified 25 Sept 2019
@@ -46,7 +45,7 @@ void setup() {
   Serial.begin(9600);
  
   //possible configuration: set up the clock 
-  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(1000000000, MSBFIRST, SPI_MODE0));
   
   //set up the pins 
   SPI.begin();
@@ -100,6 +99,9 @@ void loop() {
   }
   
   // Print axis
+  Serial.print("Micro=");
+  Serial.print(micros());
+  Serial.print("\t");
   Serial.print("X=");
   Serial.print(xdata*3.9E-6 - offSets[0]);
   Serial.print("\t");
@@ -113,7 +115,7 @@ void loop() {
   Serial.print("\n");
 
   // Next data in 100 milliseconds
-  delay(100);
+//  delay(100);
   ++count;
 
   if (count == 65000) {
